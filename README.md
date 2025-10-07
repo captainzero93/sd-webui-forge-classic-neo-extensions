@@ -41,6 +41,8 @@ ultralytics>=8.0.0
 ```
 may also be worth adding 
 ```opencv-python-headless``` in the line below.
+
+
 4. Restart Forge Neo
 
 The extension should now be working, please report any issues.
