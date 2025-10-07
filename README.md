@@ -38,12 +38,13 @@ Without this step, the second tab where you download the hands model won't work.
 
 ```txt
 ultralytics>=8.0.0
-opencv-python-headless
 ```
-
+may also be worth adding 
+```opencv-python-headless``` in the line below.
 4. Restart Forge Neo
 
-The extension should now be working, please report any issues
+The extension should now be working, please report any issues.
+
 ## Contributing
 
 Feel free to submit issues or pull requests if you encounter any problems or have improvements.
