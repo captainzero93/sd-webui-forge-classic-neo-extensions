@@ -12,7 +12,7 @@ https://github.com/Haoming02/sd-webui-forge-classic/tree/neo
 ## Installation
 
 1. Clone or download this repository
-2. Copy the extracted folders ( inside the download `in the folder sd-webui-forge-classic-neo-extensions-main` to your `sd-webui-forge-neo/extensions/`directory
+2. Copy the extracted folders ( inside the zip / pull `in the folder named sd-webui-forge-classic-neo-extensions-main` take the folders in there and copy them to your `sd-webui-forge-neo/extensions/` directory.
 3. Restart Forge Neo 
 
 ## UDDetailer Setup (ADetailer Alternative)
