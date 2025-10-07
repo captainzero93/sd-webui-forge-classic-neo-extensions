@@ -1,6 +1,7 @@
 # SD WebUI Forge Classic Neo Extensions
 
 This repository contains missing extensions from Webui Forge - Neo that have been updated.
+https://github.com/Haoming02/sd-webui-forge-classic/tree/neo
 
 ## Available Extensions
 
@@ -42,8 +43,7 @@ opencv-python-headless
 
 4. Restart Forge Neo
 
-The extension should now be fully functional!
-
+The extension should now be working, please report any issues
 ## Contributing
 
 Feel free to submit issues or pull requests if you encounter any problems or have improvements.
