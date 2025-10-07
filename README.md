@@ -42,7 +42,7 @@ Then restart Forge Neo.
 
 ### Step 2: Add Requirements
 
-Without this step, the second tab where you download the hands model won't work.
+Without this step, the second tab where you download the hands/alternate models won't work.
 
 1. Navigate to: `sd-webui-forge-neo\extensions\uddetailer`
 2. Create or edit `requirements.txt`
