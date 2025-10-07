@@ -45,7 +45,7 @@ may also be worth adding
 
 4. Restart Forge Neo
 
-The extension should now be working, please report any issues.
+The extension(s) should now be working!
 
 ## Contributing
 
