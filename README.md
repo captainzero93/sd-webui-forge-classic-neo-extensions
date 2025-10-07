@@ -23,7 +23,7 @@ To use UDDetailer for auto face/hand inpainting (updated ADetailer working in Ne
 
 Install from URL in Forge Neo's extension manager:
 ```
-[https://github.com/wkpark/uddetailer]
+https://github.com/wkpark/uddetailer
 ```
 
 Then restart Forge Neo.
