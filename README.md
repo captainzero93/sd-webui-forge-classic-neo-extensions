@@ -1,19 +1,53 @@
-# sd-webui-forge-classic-neo-extensions
+# SD WebUI Forge Classic Neo Extensions
 
-sd-webui-forge-classic/tree/neo working missing extentions from Forge so far:
+This repository contains missing extensions from Webui Forge - Neo that have been updated.
 
--- freeu (v2) for Forge Neo
--- sd_forge_perturbed_attention for Forge Neo
--- sd_forge_sag for FOrge Neo 
+## Available Extensions
 
-To fix / use uddetailer / auto face / hand inpainting ( basically adetailer updated and working in neo)
-install from URL in neo, restart,
-add requirments.txt to sd-webui-forge-neo\extensions\uddetailer 
+- **FreeU (v2)** - FreeU extension for Forge Neo
+- **Perturbed Attention** - Perturbed attention guidance for Forge Neo  
+- **SAG (Self-Attention Guidance)** - Self-attention guidance for Forge Neo
 
-in the file place:
+## Installation
 
+1. Clone or download this repository
+2. Copy the extension folders to your `sd-webui-forge-neo/extensions/` directory
+3. Restart Forge Neo
+
+## UDDetailer Setup (ADetailer Alternative)
+
+To use UDDetailer for auto face/hand inpainting (updated ADetailer working in Neo):
+
+### Step 1: Install UDDetailer
+
+Install from URL in Forge Neo's extension manager:
+```
+https://github.com/Uminosachi/sd-webui-uddetailer
+```
+
+Then restart Forge Neo.
+
+### Step 2: Add Requirements
+
+Without this step, the second tab where you download the hands model won't work.
+
+1. Navigate to: `sd-webui-forge-neo\extensions\uddetailer`
+2. Create or edit `requirements.txt`
+3. Add the following lines:
+
+```txt
 ultralytics>=8.0.0
 opencv-python-headless
+```
 
-restart neo
-- Without the steps above the second tab where you download the hands model wont work.
+4. Restart Forge Neo
+
+The extension should now be fully functional!
+
+## Contributing
+
+Feel free to submit issues or pull requests if you encounter any problems or have improvements.
+
+## License
+
+Please refer to individual extension licenses.
