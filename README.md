@@ -53,7 +53,7 @@ ultralytics>=8.0.0
 ```
 may also be worth adding 
 ```opencv-python-headless``` in the line below.
-
+I also reccomend mediapipe face FULL, otherwise it seems to not active sometimes
 
 4. Restart Forge Neo
 
