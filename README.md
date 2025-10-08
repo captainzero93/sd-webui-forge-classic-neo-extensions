@@ -8,7 +8,7 @@ https://github.com/Haoming02/sd-webui-forge-classic/tree/neo
 - **FreeU (v2)** - FreeU extension for Forge Neo
 - **Perturbed Attention** - Perturbed attention guidance for Forge Neo  
 - **SAG (Self-Attention Guidance)** - Self-attention guidance for Forge Neo
-
+- **UDDetailer Setup Instructions
 ## Installation
 
 1. Clone or download this repository
