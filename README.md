@@ -1,6 +1,6 @@
 # SD WebUI Forge Classic Neo Extensions
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/nucleardiffusion)
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/captainzero)
 
 This repository contains missing extensions from Webui Forge - Neo that have been updated.
 https://github.com/Haoming02/sd-webui-forge-classic/tree/neo
