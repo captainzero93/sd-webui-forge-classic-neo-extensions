@@ -55,48 +55,138 @@ def attention_basic_with_sim(q, k, v, heads, mask=None):
     return (out, sim)
 
 
+def _choose_hw_from_token_count(n_tokens: int, lh: int, lw: int):
+    """
+    Choose (h, w) such that h*w == n_tokens and w/h ~= lw/lh.
+    Falls back to closest divisor pair to the target aspect ratio, otherwise (n_tokens, 1).
+    """
+    if n_tokens <= 0:
+        return 1, 1
+
+    # target aspect ratio
+    target = max(lw, 1) / max(lh, 1)
+
+    # ideal width before snapping to divisor
+    w_approx = max(1, int(round(math.sqrt(n_tokens * target))))
+
+    # scan around w_approx for a divisor of n_tokens
+    max_scan = int(max(32, math.sqrt(n_tokens)))
+    best = None
+    best_err = float('inf')
+
+    for d in range(max_scan + 1):
+        for w in (w_approx - d, w_approx + d):
+            if w <= 0:
+                continue
+            if n_tokens % w == 0:
+                h = n_tokens // w
+                ratio = w / max(h, 1)
+                err = abs(ratio - target)
+                if err < best_err:
+                    best_err = err
+                    best = (h, w)
+        if best is not None:
+            break
+
+    if best is None:
+        # fallback: pick the widest divisor <= n_tokens
+        w = 1
+        for cand in range(int(math.sqrt(n_tokens)), 0, -1):
+            if n_tokens % cand == 0:
+                w = max(cand, n_tokens // cand)
+                break
+        h = n_tokens // w
+        best = (h, w)
+
+    return best
+
+
 def create_blur_map(x0, attn, sigma=3.0, threshold=1.0):
-    # reshape and GAP the attention map
+    """
+    Create a blurred version of x0 guided by an attention-derived mask.
+
+    This version is **robust** to shape mismatches between UNet features and
+    attention token grids (common with SDXL, k-diffusion samplers, and certain
+    HR/resize paths). It infers the (h, w) grid from the token count and the
+    latent aspect ratio, avoiding invalid .reshape() calls.
+    """
+    if attn is None:
+        # No attention recorded; safely return the input (no SAG applied)
+        return x0
+
+    # attn expected shape: (B*heads?, hw1, hw2)
+    # We aggregate over heads and the query dimension to get a per-key token map.
     _, hw1, hw2 = attn.shape
-    b, _, lh, lw = x0.shape
-    attn = attn.reshape(b, -1, hw1, hw2)
-    # Global Average Pool
-    mask = attn.mean(1, keepdim=False).sum(1, keepdim=False) > threshold
+    b, c, lh, lw = x0.shape
 
-    # original method: works for all normal inputs that *do not* have Kohya HRFix scaling; typically fails with scaling
-    ratio = 2**(math.ceil(math.sqrt(lh * lw / hw1)) - 1).bit_length()
-    h = math.ceil(lh / ratio)
-    w = math.ceil(lw / ratio)
+    # Reshape to (b, heads, hw1, hw2) if possible by inferring number of heads from batch
+    # The upstream code stores attn for uncond only, sliced already by heads; here we simply
+    # treat it as (b, hw1, hw2) after averaging over potential head dimension.
+    try:
+        # Try to infer a (b, -1, hw1, hw2) view, then average over heads
+        tmp = attn.reshape(b, -1, hw1, hw2)
+        attn_avg = tmp.mean(1, keepdim=False)  # (b, hw1, hw2)
+    except Exception:
+        # Fallback: assume single head packed, make a best-effort batch view
+        attn_avg = attn
+        if attn_avg.dim() == 3:
+            # Collapse over query tokens to obtain a 2D token map per batch
+            attn_avg = attn_avg.mean(1, keepdim=False)  # (hw2,) or (b?, hw2)
+            if attn_avg.dim() == 1:
+                attn_avg = attn_avg.unsqueeze(0)  # (1, hw2)
 
-    if h * w != mask.size(1):
-        kohya_shrink_shape = getattr(shared, 'kohya_shrink_shape', None)
-        if kohya_shrink_shape:
-            w = kohya_shrink_shape[0]
-            h = kohya_shrink_shape[1]
+    # We want a boolean mask per token (keys). After averaging across the query axis (hw1),
+    # we threshold over keys (hw2) to get (b, hw2).
+    if attn_avg.dim() == 3:
+        # (b, hw1, hw2) -> sum/mean over hw1
+        token_scores = attn_avg.mean(1, keepdim=False)  # (b, hw2)
+    elif attn_avg.dim() == 2:
+        token_scores = attn_avg  # already (b, hw2)
+    else:
+        # Unexpected; do nothing
+        return x0
 
-    # Reshape
-    mask = (
-        mask.reshape(b, h, w)
-        .unsqueeze(1)
-        .type(attn.dtype)
-    )
-    # Upsample
-    mask = torch.nn.functional.interpolate(mask, (lh, lw))
+    # Threshold to get a binary mask over tokens
+    mask_tokens = (token_scores > threshold)  # (b, hw2)
 
+    # Infer (h, w) for token grid from count and latent aspect
+    n_tokens = mask_tokens.size(1)
+
+    # First try Kohya HRFix hint if present
+    kohya_shape = getattr(shared, 'kohya_shrink_shape', None)
+    if kohya_shape and isinstance(kohya_shape, (list, tuple)) and len(kohya_shape) == 2:
+        w, h = int(kohya_shape[0]), int(kohya_shape[1])
+        if w * h == n_tokens:
+            grid_h, grid_w = h, w
+        else:
+            grid_h, grid_w = _choose_hw_from_token_count(n_tokens, lh, lw)
+    else:
+        grid_h, grid_w = _choose_hw_from_token_count(n_tokens, lh, lw)
+
+    # Reshape mask to spatial grid and upsample to latent size
+    try:
+        mask_spatial = mask_tokens.reshape(b, grid_h, grid_w).unsqueeze(1).to(dtype=x0.dtype, device=x0.device)
+    except Exception:
+        # Final fallback: treat as a flat 1xN and broadcast
+        mask_spatial = mask_tokens.unsqueeze(1).to(dtype=x0.dtype, device=x0.device)
+
+    # Upsample to latent spatial size
+    mask_up = torch.nn.functional.interpolate(mask_spatial, size=(lh, lw), mode='nearest')
+
+    # Apply gaussian blur to obtain degraded image
     blurred = gaussian_blur_2d(x0, kernel_size=9, sigma=sigma)
-    blurred = blurred * mask + x0 * (1 - mask)
-    return blurred
+    blended = blurred * mask_up + x0 * (1 - mask_up)
+    return blended
 
 
 def gaussian_blur_2d(img, kernel_size, sigma):
     ksize_half = (kernel_size - 1) * 0.5
 
-    x = torch.linspace(-ksize_half, ksize_half, steps=kernel_size)
+    x = torch.linspace(-ksize_half, ksize_half, steps=kernel_size, device=img.device, dtype=img.dtype)
 
     pdf = torch.exp(-0.5 * (x / sigma).pow(2))
 
     x_kernel = pdf / pdf.sum()
-    x_kernel = x_kernel.to(device=img.device, dtype=img.dtype)
 
     kernel2d = torch.mm(x_kernel[:, None], x_kernel[None, :])
     kernel2d = kernel2d.expand(img.shape[-3], 1, kernel2d.shape[0], kernel2d.shape[1])
@@ -130,7 +220,7 @@ def is_flux_model(model):
                 name_str = str(model_name).lower()
                 if 'flux' in name_str or 'kontext' in name_str or 'krea' in name_str:
                     return True
-    except:
+    except Exception:
         pass
     
     return False
@@ -147,9 +237,9 @@ class SelfAttentionGuidance:
         def attn_and_record(q, k, v, extra_options):
             nonlocal attn_scores
             # if uncond, save the attention scores
-            heads = extra_options["n_heads"]
-            cond_or_uncond = extra_options["cond_or_uncond"]
-            b = q.shape[0] // len(cond_or_uncond)
+            heads = extra_options.get("n_heads", 1)
+            cond_or_uncond = extra_options.get("cond_or_uncond", [0])
+            b = q.shape[0] // max(len(cond_or_uncond), 1)
             if 1 in cond_or_uncond:
                 uncond_index = cond_or_uncond.index(1)
                 # do the entire attention operation, but save the attention scores to attn_scores
@@ -175,6 +265,11 @@ class SelfAttentionGuidance:
             sigma = args["sigma"]
             model_options = args["model_options"]
             x = args["input"]
+
+            # Safeguards
+            if uncond_attn is None:
+                return cfg_result
+
             if min(cfg_result.shape[2:]) <= 4:  # skip when too small to add padding
                 return cfg_result
 
