@@ -37,26 +37,23 @@ To use UDDetailer for auto face/hand inpainting (updated ADetailer working in Ne
 
 Install from URL in Forge Neo's extension manager:
 ```
-https://github.com/wkpark/uddetailer
+https://github.com/ussoewwin/ADetailer_without_mediapipe
 ```
+
+
+On Windows from Open CMD in the sd-webui-forge-neo folder and then paste these
+
+venv\Scripts\python.exe -m pip uninstall -y numpy insightface onnxruntime onnxruntime-gpu
+venv\Scripts\python.exe -m pip install numpy==1.26.4
+venv\Scripts\python.exe -m pip install onnxruntime-gpu==1.20.2
+venv\Scripts\python.exe -m pip install insightface==0.7.3
 
 Then restart Forge Neo.
 
-### Step 2: Add Requirements
+This will fix the depends errors loading the plugin using the recommended version of Py
 
-Without this step, the second tab where you download the hands/alternate models won't work.
 
-1. Navigate to: `sd-webui-forge-neo\extensions\uddetailer`
-2. Create or edit `requirements.txt`
-3. Add the following lines:
 
-```txt
-ultralytics>=8.0.0
-```
-may also be worth adding 
-```opencv-python-headless``` in the line below.
-
-I also reccomend mediapipe_face_full, otherwise it seems to not detect faces sometimes.
 
 4. Restart Forge Neo
 
