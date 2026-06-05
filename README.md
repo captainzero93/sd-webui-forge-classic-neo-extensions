@@ -34,33 +34,8 @@ https://github.com/Haoming02/sd-webui-forge-classic/tree/neo
 To use UDDetailer for auto face/hand inpainting (updated ADetailer working in Neo):
 
 ### Step 1: Install UDDetailer
-
-Install from URL in Forge Neo's extension manager:
-```
-https://github.com/ussoewwin/ADetailer_without_mediapipe
-```
-
-
-On Windows from Open CMD in the sd-webui-forge-neo folder and then paste these
-```
-venv\Scripts\python.exe -m pip uninstall -y numpy insightface onnxruntime onnxruntime-gpu
-```
-
-```
-venv\Scripts\python.exe -m pip install numpy==1.26.4
-```
-
-```
-venv\Scripts\python.exe -m pip install onnxruntime-gpu==1.20.2
-```
-
-```
-venv\Scripts\python.exe -m pip install insightface==0.7.3
-```
-
-Then restart Forge Neo.
-
-This will fix the depends errors loading the plugin using the recommended version of Py
+Update - I just use this now:
+https://github.com/Haoming02/ADetailer-Neo
 
 
 
