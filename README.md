@@ -44,18 +44,19 @@ https://github.com/ussoewwin/ADetailer_without_mediapipe
 On Windows from Open CMD in the sd-webui-forge-neo folder and then paste these
 
 venv\Scripts\python.exe -m pip uninstall -y numpy insightface onnxruntime onnxruntime-gpu
+
 venv\Scripts\python.exe -m pip install numpy==1.26.4
+
 venv\Scripts\python.exe -m pip install onnxruntime-gpu==1.20.2
+
 venv\Scripts\python.exe -m pip install insightface==0.7.3
+
 
 Then restart Forge Neo.
 
 This will fix the depends errors loading the plugin using the recommended version of Py
 
 
-
-
-4. Restart Forge Neo
 
 The extension(s) should now be working!
 
